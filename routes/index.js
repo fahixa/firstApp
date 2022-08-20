@@ -1,13 +1,15 @@
 var express = require('express');
 var router = express.Router();
 
+const {checkAuth, forwardAuth} = require('../config/auth');
+
 // Welcome Page
-router.get('/', function(req, res, next) {
+router.get('/', forwardAuth, function(req, res, next) {
   res.render('welcome', { title: 'Welcome Page' });
 });
 
 // Dashboard Page
-router.get("/dashboard", function(req, res, next){
+router.get("/dashboard", checkAuth, function(req, res, next){
   res.render("dashboard", { title: "Dashboard Page" });
 })
 

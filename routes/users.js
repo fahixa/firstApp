@@ -1,17 +1,20 @@
 var express = require('express');
 var router = express.Router();
 const bcrypt = require('bcrypt');
+const passport = require('passport');
+
+const {forwardAuth} = require('../config/auth');
 
 // import user Schema
-const User = require('../models/userSchema');
+const User = require('../models/UserSchema');
 
 // GET login
-router.get('/login', function (req, res, next) {
+router.get('/login', forwardAuth, function (req, res, next) {
   res.render('login', { title: 'Login Page' });
 });
 
 // POST Login
-router.post('/login', function (req, res, next) {
+router.post('/login', forwardAuth, function (req, res, next) {
   const { email, password } = req.body;
   console.log(req.body);
 
@@ -27,38 +30,21 @@ router.post('/login', function (req, res, next) {
       password,
     });
   } else {
-    User.findOne({ email: email })
-    .then(async (user) => {
-      if (user) {
-        if (await bcrypt.compare(password, user.password)) {
-          console.log(user);
-          console.log('Check' + password, ' || ', user.password);
-          res.redirect('/dashboard');
-        } else {
-          errors.push({ msg: 'Password is incorrect' });
-          console.log('Password is incorrect')
-          res.render('login', { errors })
-        }
-      } else {
-        errors.push({ msg: 'Email is not registered' });
-        console.log('Email is not registered')
-        res.render('login', { errors })
-      }
-    }).catch((err) => {
-      errors.push({ msg: 'Internal Server Error' });
-      console.log('Internal Server Error')
-      res.render('login', { errors })
-    })
+    passport.authenticate('local', { 
+      successRedirect: '/dashboard', 
+      failureRedirect: '/auth/login', 
+      failureFlash: true,
+    })(req, res, next)
   }
 });
 
 // GET Register
-router.get('/register', function (req, res, next) {
+router.get('/register', forwardAuth, function (req, res, next) {
   res.render('register', { title: 'Register Page' });
 });
 
 // POST Register
-router.post('/register', function (req, res, next) {
+router.post('/register', forwardAuth, function (req, res, next) {
   const { name, email, password, password2 } = req.body;
   console.log(req.body);
 
@@ -115,6 +101,7 @@ router.post('/register', function (req, res, next) {
 
 // GET Logout
 router.get('/logout', function (req, res, next) {
+  req.logout();
   res.redirect('/');
 })
 
